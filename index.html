@@ -36,14 +36,19 @@ h1 {
   margin-bottom: 20px;
 }
 
-/* 總金額 */
+.card,
 .total-box {
   background: white;
   border-radius: 18px;
-  padding: 22px;
-  text-align: center;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+  padding: 20px;
   margin-bottom: 18px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+/* 總金額 */
+
+.total-box {
+  text-align: center;
 }
 
 .total-title {
@@ -57,19 +62,32 @@ h1 {
   margin-top: 6px;
 }
 
-.currency {
+.twd-total {
+  color: #888;
   font-size: 16px;
-  margin-right: 4px;
+  margin-top: 5px;
+}
+
+/* 匯率 */
+
+.rate-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rate-box input {
+  margin: 0;
+  flex: 1;
+}
+
+.rate-text {
+  font-size: 14px;
+  color: #777;
+  white-space: nowrap;
 }
 
 /* 表單 */
-.card {
-  background: white;
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 18px;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
-}
 
 label {
   display: block;
@@ -103,11 +121,8 @@ button {
   color: white;
 }
 
-.add-btn:hover {
-  opacity: 0.9;
-}
+/* 統計 */
 
-/* 分類統計 */
 .stats-title {
   font-weight: bold;
   margin-bottom: 12px;
@@ -126,6 +141,7 @@ button {
 }
 
 /* 紀錄 */
+
 .record {
   background: white;
   border-radius: 15px;
@@ -147,12 +163,19 @@ button {
 
 .record-amount {
   font-weight: bold;
+  text-align: right;
+}
+
+.record-twd {
+  color: #888;
+  font-size: 13px;
+  margin-top: 3px;
 }
 
 .record-info {
   color: #999;
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .record-actions {
@@ -192,18 +215,56 @@ button {
   <div class="subtitle">韓元消費紀錄</div>
 
   <!-- 總支出 -->
+
   <div class="total-box">
-    <div class="total-title">目前總支出</div>
-    <div class="total">
-      <span class="currency">₩</span>
-      <span id="totalAmount">0</span>
+
+    <div class="total-title">
+      目前總支出
     </div>
+
+    <div class="total">
+      ₩<span id="totalAmount">0</span>
+    </div>
+
+    <div class="twd-total">
+      ≈ NT$<span id="totalTWD">0</span>
+    </div>
+
   </div>
 
+
+  <!-- 匯率 -->
+
+  <div class="card">
+
+    <label>💱 韓元 → 台幣匯率</label>
+
+    <div class="rate-box">
+
+      <input
+        type="number"
+        id="exchangeRate"
+        value="0.023"
+        step="0.0001"
+        min="0"
+        oninput="updateRate()"
+      >
+
+      <div class="rate-text">
+        1 KRW = NT$
+      </div>
+
+    </div>
+
+  </div>
+
+
   <!-- 新增 -->
+
   <div class="card">
 
     <label>消費名稱</label>
+
     <input
       type="text"
       id="name"
@@ -211,6 +272,7 @@ button {
     >
 
     <label>金額（韓元）</label>
+
     <input
       type="number"
       id="amount"
@@ -218,44 +280,63 @@ button {
     >
 
     <label>分類</label>
+
     <select id="category">
+
       <option value="吃飯">🍚 吃飯</option>
       <option value="交通">🚇 交通</option>
       <option value="住宿">🏨 住宿</option>
       <option value="購物">🛍️ 購物</option>
       <option value="娛樂">🎡 娛樂</option>
       <option value="其他">📌 其他</option>
+
     </select>
 
     <label>日期</label>
-    <input type="date" id="date">
+
+    <input
+      type="date"
+      id="date"
+    >
 
     <label>備註</label>
+
     <input
       type="text"
       id="note"
       placeholder="可以不填"
     >
 
-    <button class="add-btn" onclick="addRecord()">
+    <button
+      class="add-btn"
+      onclick="addRecord()"
+    >
       ＋ 新增紀錄
     </button>
 
   </div>
 
+
   <!-- 分類統計 -->
+
   <div class="card">
 
-    <div class="stats-title">📊 消費分類</div>
+    <div class="stats-title">
+      📊 消費分類
+    </div>
 
     <div id="stats"></div>
 
   </div>
 
+
   <!-- 消費紀錄 -->
+
   <div class="card">
 
-    <div class="stats-title">🧾 消費紀錄</div>
+    <div class="stats-title">
+      🧾 消費紀錄
+    </div>
 
     <div id="records"></div>
 
@@ -263,23 +344,88 @@ button {
 
 </div>
 
+
 <script>
 
-let records = JSON.parse(localStorage.getItem("koreaRecords")) || [];
+let records =
+  JSON.parse(
+    localStorage.getItem("koreaRecords")
+  ) || [];
+
+
+/* 讀取匯率 */
+
+let exchangeRate =
+  Number(
+    localStorage.getItem("koreaExchangeRate")
+  ) || 0.023;
+
+document.getElementById("exchangeRate").value =
+  exchangeRate;
+
+
+/* 預設今天 */
 
 document.getElementById("date").value =
   new Date().toISOString().split("T")[0];
 
+
+/* 儲存 */
+
 function save() {
+
   localStorage.setItem(
     "koreaRecords",
     JSON.stringify(records)
   );
+
 }
 
+
+/* 格式 */
+
 function formatNumber(num) {
+
   return Number(num).toLocaleString("ko-KR");
+
 }
+
+
+/* 台幣格式 */
+
+function formatTWD(num) {
+
+  return Math.round(num).toLocaleString("zh-TW");
+
+}
+
+
+/* 修改匯率 */
+
+function updateRate() {
+
+  const value =
+    Number(
+      document.getElementById("exchangeRate").value
+    );
+
+  if (!value || value <= 0) {
+    return;
+  }
+
+  exchangeRate = value;
+
+  localStorage.setItem(
+    "koreaExchangeRate",
+    exchangeRate
+  );
+
+  render();
+
+}
+
+
+/* 新增紀錄 */
 
 function addRecord() {
 
@@ -287,7 +433,9 @@ function addRecord() {
     document.getElementById("name").value.trim();
 
   const amount =
-    Number(document.getElementById("amount").value);
+    Number(
+      document.getElementById("amount").value
+    );
 
   const category =
     document.getElementById("category").value;
@@ -298,93 +446,178 @@ function addRecord() {
   const note =
     document.getElementById("note").value.trim();
 
+
   if (!name) {
+
     alert("請輸入消費名稱");
     return;
+
   }
+
 
   if (!amount || amount <= 0) {
+
     alert("請輸入正確金額");
     return;
+
   }
 
+
   records.push({
+
     id: Date.now(),
+
     name,
+
     amount,
+
     category,
+
     date,
+
     note
+
   });
+
 
   save();
 
+
   document.getElementById("name").value = "";
+
   document.getElementById("amount").value = "";
+
   document.getElementById("note").value = "";
 
+
   render();
+
 }
+
+
+/* 刪除 */
 
 function deleteRecord(id) {
 
-  if (!confirm("確定要刪除這筆紀錄嗎？")) {
+  if (
+    !confirm("確定要刪除這筆紀錄嗎？")
+  ) {
     return;
   }
 
+
   records =
-    records.filter(record => record.id !== id);
+    records.filter(
+      record => record.id !== id
+    );
+
 
   save();
+
   render();
+
 }
+
+
+/* 修改 */
 
 function editRecord(id) {
 
   const record =
-    records.find(record => record.id === id);
+    records.find(
+      record => record.id === id
+    );
+
 
   if (!record) return;
 
+
   const newName =
-    prompt("消費名稱", record.name);
+    prompt(
+      "消費名稱",
+      record.name
+    );
+
 
   if (newName === null) return;
 
+
   const newAmount =
-    prompt("金額（韓元）", record.amount);
+    prompt(
+      "金額（韓元）",
+      record.amount
+    );
+
 
   if (newAmount === null) return;
 
+
+  const amount =
+    Number(newAmount);
+
+
+  if (!amount || amount <= 0) {
+
+    alert("請輸入正確金額");
+    return;
+
+  }
+
+
   record.name = newName;
-  record.amount = Number(newAmount);
+
+  record.amount = amount;
+
 
   save();
+
   render();
+
 }
 
+
+/* 顯示 */
+
 function render() {
+
 
   /* 總金額 */
 
   const total =
     records.reduce(
-      (sum, record) => sum + Number(record.amount),
+      (sum, record) =>
+        sum + Number(record.amount),
       0
     );
 
-  document.getElementById("totalAmount")
-    .textContent = formatNumber(total);
+
+  const totalTWD =
+    total * exchangeRate;
 
 
-  /* 分類統計 */
+  document.getElementById(
+    "totalAmount"
+  ).textContent =
+    formatNumber(total);
+
+
+  document.getElementById(
+    "totalTWD"
+  ).textContent =
+    formatTWD(totalTWD);
+
+
+  /* 分類 */
 
   const categories = {};
+
 
   records.forEach(record => {
 
     if (!categories[record.category]) {
+
       categories[record.category] = 0;
+
     }
 
     categories[record.category] +=
@@ -392,30 +625,49 @@ function render() {
 
   });
 
+
   const stats =
     document.getElementById("stats");
 
+
   stats.innerHTML = "";
 
-  if (Object.keys(categories).length === 0) {
+
+  if (
+    Object.keys(categories).length === 0
+  ) {
 
     stats.innerHTML =
       '<div class="empty">還沒有消費紀錄</div>';
 
   } else {
 
-    Object.entries(categories).forEach(
-      ([category, amount]) => {
+    Object.entries(categories)
+      .forEach(
+        ([category, amount]) => {
 
-        stats.innerHTML += `
-          <div class="stat-row">
-            <span>${category}</span>
-            <strong>₩${formatNumber(amount)}</strong>
-          </div>
-        `;
+          stats.innerHTML += `
 
-      }
-    );
+            <div class="stat-row">
+
+              <span>${category}</span>
+
+              <span>
+                ₩${formatNumber(amount)}
+                <br>
+                <small>
+                  ≈ NT$${formatTWD(
+                    amount * exchangeRate
+                  )}
+                </small>
+              </span>
+
+            </div>
+
+          `;
+
+        }
+      );
 
   }
 
@@ -425,7 +677,9 @@ function render() {
   const recordsBox =
     document.getElementById("records");
 
+
   recordsBox.innerHTML = "";
+
 
   if (records.length === 0) {
 
@@ -433,11 +687,18 @@ function render() {
       '<div class="empty">還沒有任何紀錄</div>';
 
     return;
+
   }
+
 
   [...records]
     .reverse()
     .forEach(record => {
+
+      const twd =
+        Number(record.amount) *
+        exchangeRate;
+
 
       recordsBox.innerHTML += `
 
@@ -450,16 +711,36 @@ function render() {
             </div>
 
             <div class="record-amount">
+
               ₩${formatNumber(record.amount)}
+
+              <div class="record-twd">
+                ≈ NT$${formatTWD(twd)}
+              </div>
+
             </div>
 
           </div>
 
+
           <div class="record-info">
+
             ${record.category}
-            ${record.date ? " ・ " + record.date : ""}
-            ${record.note ? " ・ " + record.note : ""}
+
+            ${
+              record.date
+              ? " ・ " + record.date
+              : ""
+            }
+
+            ${
+              record.note
+              ? " ・ " + record.note
+              : ""
+            }
+
           </div>
+
 
           <div class="record-actions">
 
@@ -469,6 +750,7 @@ function render() {
             >
               ✏️ 修改
             </button>
+
 
             <button
               class="delete-btn"
@@ -486,6 +768,7 @@ function render() {
     });
 
 }
+
 
 render();
 
