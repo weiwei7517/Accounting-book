@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出國記帳｜韓元</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f7f7f5;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 26px;
+  margin: 10px 0 5px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* 總金額 */
+.total-box {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  text-align: center;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+  margin-bottom: 18px;
+}
+
+.total-title {
+  color: #888;
+  font-size: 14px;
+}
+
+.total {
+  font-size: 32px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+
+.currency {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* 表單 */
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 6px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 14px;
+  background: #fff;
+}
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.add-btn {
+  background: #333;
+  color: white;
+}
+
+.add-btn:hover {
+  opacity: 0.9;
+}
+
+/* 分類統計 */
+.stats-title {
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+/* 紀錄 */
+.record {
+  background: white;
+  border-radius: 15px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.record-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.record-amount {
+  font-weight: bold;
+}
+
+.record-info {
+  color: #999;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.record-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.record-actions button {
+  padding: 8px;
+  font-size: 13px;
+}
+
+.edit-btn {
+  background: #eee;
+  color: #333;
+}
+
+.delete-btn {
+  background: #f5f5f5;
+  color: #d55;
+}
+
+.empty {
+  text-align: center;
+  color: #aaa;
+  padding: 25px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🇰🇷 出國記帳</h1>
+  <div class="subtitle">韓元消費紀錄</div>
+
+  <!-- 總支出 -->
+  <div class="total-box">
+    <div class="total-title">目前總支出</div>
+    <div class="total">
+      <span class="currency">₩</span>
+      <span id="totalAmount">0</span>
+    </div>
+  </div>
+
+  <!-- 新增 -->
+  <div class="card">
+
+    <label>消費名稱</label>
+    <input
+      type="text"
+      id="name"
+      placeholder="例如：烤肉、咖啡、地鐵"
+    >
+
+    <label>金額（韓元）</label>
+    <input
+      type="number"
+      id="amount"
+      placeholder="例如：15000"
+    >
+
+    <label>分類</label>
+    <select id="category">
+      <option value="吃飯">🍚 吃飯</option>
+      <option value="交通">🚇 交通</option>
+      <option value="住宿">🏨 住宿</option>
+      <option value="購物">🛍️ 購物</option>
+      <option value="娛樂">🎡 娛樂</option>
+      <option value="其他">📌 其他</option>
+    </select>
+
+    <label>日期</label>
+    <input type="date" id="date">
+
+    <label>備註</label>
+    <input
+      type="text"
+      id="note"
+      placeholder="可以不填"
+    >
+
+    <button class="add-btn" onclick="addRecord()">
+      ＋ 新增紀錄
+    </button>
+
+  </div>
+
+  <!-- 分類統計 -->
+  <div class="card">
+
+    <div class="stats-title">📊 消費分類</div>
+
+    <div id="stats"></div>
+
+  </div>
+
+  <!-- 消費紀錄 -->
+  <div class="card">
+
+    <div class="stats-title">🧾 消費紀錄</div>
+
+    <div id="records"></div>
+
+  </div>
+
+</div>
+
+<script>
+
+let records = JSON.parse(localStorage.getItem("koreaRecords")) || [];
+
+document.getElementById("date").value =
+  new Date().toISOString().split("T")[0];
+
+function save() {
+  localStorage.setItem(
+    "koreaRecords",
+    JSON.stringify(records)
+  );
+}
+
+function formatNumber(num) {
+  return Number(num).toLocaleString("ko-KR");
+}
+
+function addRecord() {
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  const amount =
+    Number(document.getElementById("amount").value);
+
+  const category =
+    document.getElementById("category").value;
+
+  const date =
+    document.getElementById("date").value;
+
+  const note =
+    document.getElementById("note").value.trim();
+
+  if (!name) {
+    alert("請輸入消費名稱");
+    return;
+  }
+
+  if (!amount || amount <= 0) {
+    alert("請輸入正確金額");
+    return;
+  }
+
+  records.push({
+    id: Date.now(),
+    name,
+    amount,
+    category,
+    date,
+    note
+  });
+
+  save();
+
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+  document.getElementById("note").value = "";
+
+  render();
+}
+
+function deleteRecord(id) {
+
+  if (!confirm("確定要刪除這筆紀錄嗎？")) {
+    return;
+  }
+
+  records =
+    records.filter(record => record.id !== id);
+
+  save();
+  render();
+}
+
+function editRecord(id) {
+
+  const record =
+    records.find(record => record.id === id);
+
+  if (!record) return;
+
+  const newName =
+    prompt("消費名稱", record.name);
+
+  if (newName === null) return;
+
+  const newAmount =
+    prompt("金額（韓元）", record.amount);
+
+  if (newAmount === null) return;
+
+  record.name = newName;
+  record.amount = Number(newAmount);
+
+  save();
+  render();
+}
+
+function render() {
+
+  /* 總金額 */
+
+  const total =
+    records.reduce(
+      (sum, record) => sum + Number(record.amount),
+      0
+    );
+
+  document.getElementById("totalAmount")
+    .textContent = formatNumber(total);
+
+
+  /* 分類統計 */
+
+  const categories = {};
+
+  records.forEach(record => {
+
+    if (!categories[record.category]) {
+      categories[record.category] = 0;
+    }
+
+    categories[record.category] +=
+      Number(record.amount);
+
+  });
+
+  const stats =
+    document.getElementById("stats");
+
+  stats.innerHTML = "";
+
+  if (Object.keys(categories).length === 0) {
+
+    stats.innerHTML =
+      '<div class="empty">還沒有消費紀錄</div>';
+
+  } else {
+
+    Object.entries(categories).forEach(
+      ([category, amount]) => {
+
+        stats.innerHTML += `
+          <div class="stat-row">
+            <span>${category}</span>
+            <strong>₩${formatNumber(amount)}</strong>
+          </div>
+        `;
+
+      }
+    );
+
+  }
+
+
+  /* 消費紀錄 */
+
+  const recordsBox =
+    document.getElementById("records");
+
+  recordsBox.innerHTML = "";
+
+  if (records.length === 0) {
+
+    recordsBox.innerHTML =
+      '<div class="empty">還沒有任何紀錄</div>';
+
+    return;
+  }
+
+  [...records]
+    .reverse()
+    .forEach(record => {
+
+      recordsBox.innerHTML += `
+
+        <div class="record">
+
+          <div class="record-top">
+
+            <div class="record-name">
+              ${record.name}
+            </div>
+
+            <div class="record-amount">
+              ₩${formatNumber(record.amount)}
+            </div>
+
+          </div>
+
+          <div class="record-info">
+            ${record.category}
+            ${record.date ? " ・ " + record.date : ""}
+            ${record.note ? " ・ " + record.note : ""}
+          </div>
+
+          <div class="record-actions">
+
+            <button
+              class="edit-btn"
+              onclick="editRecord(${record.id})"
+            >
+              ✏️ 修改
+            </button>
+
+            <button
+              class="delete-btn"
+              onclick="deleteRecord(${record.id})"
+            >
+              🗑️ 刪除
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
